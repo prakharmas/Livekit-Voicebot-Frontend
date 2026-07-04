@@ -139,8 +139,10 @@ export const getLiveCalls = () => api.get("/calls/live");
 export const getCall = (id: number) => api.get(`/calls/${id}`);
 
 /** Authenticated fetch — required because <audio src> cannot send Bearer tokens. */
-export const fetchCallRecordingBlob = (callId: number) =>
-  api.get(`/calls/${callId}/recording/file`, { responseType: "blob" });
+export const getCallRecording = (data: { uid: string }) =>
+  api.post("/get-call-recording", data, {
+    responseType: "blob",
+  });
 
 // Analytics
 export const getDashboardStats = (days = 30) =>

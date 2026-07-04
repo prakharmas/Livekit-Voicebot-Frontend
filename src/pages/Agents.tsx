@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Pencil, Plus, Trash2, TestTube, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Input, Select, Textarea } from "@/components/ui/Input";
+import { Input, Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { createAgent, deleteAgent, getAgents, readAgent, testAgent, updateAgent, enableAgent } from "@/lib/api";
+import { createAgent, deleteAgent, getAgents, readAgent, updateAgent, enableAgent } from "@/lib/api";
 
 interface Agent {
   uid: string;
@@ -19,6 +19,7 @@ interface ReadAgentResponse {
   sip_id: string;
   xfer_sip_id: string;
   prompt: string;
+  sentiment_prompt: string;
   max_concurrent_calls: number;
   lead_fields: {
     name: string;
@@ -55,6 +56,7 @@ type AgentForm = {
   sip_id: string;
   xfer_sip_id: string;
   prompt: string;
+  sentiment_prompt: string;
   max_concurrent_calls: number;
   lead_fields_text: string;
 };
@@ -64,6 +66,7 @@ const defaultForm: AgentForm = {
   sip_id: "",
   xfer_sip_id: "",
   prompt: "",
+  sentiment_prompt: "",
   max_concurrent_calls: 1,
   lead_fields_text:
     "customer_name: Customer name\nphone: Mobile number",
@@ -149,6 +152,16 @@ function AgentFormFields({
           placeholder="System Prompt — scripts, SOP, renewal flow, etc."
           value={form.prompt}
           onChange={(e) => setForm({ ...form, prompt: e.target.value })}
+        />
+      </div>
+      <div className="md:col-span-2">
+        <label className="text-xs font-medium text-slate-500 mb-1 block">Sentiment prompt</label>
+        <Textarea
+          rows={12}
+          className="min-h-[200px] font-mono text-xs"
+          placeholder="Sentiment Prompt"
+          value={form.sentiment_prompt}
+          onChange={(e) => setForm({ ...form, sentiment_prompt: e.target.value })}
         />
       </div>
       <Textarea
@@ -289,6 +302,7 @@ export default function Agents() {
     sip_id: form.sip_id,
     xfer_sip_id: form.xfer_sip_id,
     prompt: form.prompt,
+    sentiment_prompt: form.sentiment_prompt,
     max_concurrent_calls: form.max_concurrent_calls,
     lead_fields: textToLeadFields(form.lead_fields_text),
   });
@@ -319,6 +333,7 @@ export default function Agents() {
         sip_id: data.sip_id,
         xfer_sip_id: data.xfer_sip_id,
         prompt: data.prompt,
+        sentiment_prompt: data.sentiment_prompt,
         max_concurrent_calls: data.max_concurrent_calls,
         lead_fields_text: leadFieldsToText(data.lead_fields),
       });

@@ -1,19 +1,19 @@
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
+  // BarChart3,
   Bot,
   Building2,
-  CreditCard,
-  FileText,
-  GitBranch,
-  Hash,
+  // CreditCard,
+  // FileText,
+  // GitBranch,
+  // Hash,
   // Key,
   LayoutDashboard,
   // MessageSquare,
   Phone,
   PhoneCall,
-  Radio,
-  Settings,
+  // Radio,
+  // Settings,
   Target,
   Users,
   // Webhook,
@@ -39,23 +39,23 @@ const groups: Group[] = [
     heading: "AI Management",
     items: [
       { to: "/agents", icon: Bot, label: "AI Agents" },
-      { to: "/dispatch", icon: GitBranch, label: "Dispatch Rules" },
+      // { to: "/dispatch", icon: GitBranch, label: "Dispatch Rules" },
     ],
   },
-  {
-    heading: "Telephony",
-    items: [
-      { to: "/sip-trunks", icon: Radio, label: "SIP Trunks" },
-      { to: "/phone-numbers", icon: Hash, label: "Phone Numbers" },
-    ],
-  },
-  {
-    heading: "Analytics",
-    items: [
-      { to: "/reports", icon: FileText, label: "Reports" },
-      { to: "/analytics", icon: BarChart3, label: "Analytics" },
-    ],
-  },
+  // {
+  //   heading: "Telephony",
+  //   items: [
+  //     { to: "/sip-trunks", icon: Radio, label: "SIP Trunks" },
+  //     { to: "/phone-numbers", icon: Hash, label: "Phone Numbers" },
+  //   ],
+  // },
+  // {
+  //   heading: "Analytics",
+  //   items: [
+  //     { to: "/reports", icon: FileText, label: "Reports" },
+  //     { to: "/analytics", icon: BarChart3, label: "Analytics" },
+  //   ],
+  // },
   // {
   //   heading: "Integrations",
   //   items: [
@@ -64,13 +64,13 @@ const groups: Group[] = [
   //     { to: "/api-keys", icon: Key, label: "API Keys" },
   //   ],
   // },
-  {
-    heading: " ",
-    items: [
-      { to: "/billing", icon: CreditCard, label: "Billing" },
-      { to: "/settings", icon: Settings, label: "Settings" },
-    ],
-  },
+  // {
+  //   heading: " ",
+  //   items: [
+  //     { to: "/billing", icon: CreditCard, label: "Billing" },
+  //     { to: "/settings", icon: Settings, label: "Settings" },
+  //   ],
+  // },
 ];
 
 export function Sidebar() {

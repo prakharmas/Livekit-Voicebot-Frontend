@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { getClients, getClientsDetailed, createClient, createUser } from "@/lib/api";
+import { getClientsDetailed, createClient, createUser } from "@/lib/api";
 
 interface Client {
   uid: string;

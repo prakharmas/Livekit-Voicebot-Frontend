@@ -6,10 +6,7 @@ import { Input, Select } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import {
   createCampaign,
-  dialCampaign,
   getAgents,
-  getCampaigns,
-  getCampaignStats,
   updateCampaignStatus,
   deleteCampaigns,
   getCampaignsDetailed,

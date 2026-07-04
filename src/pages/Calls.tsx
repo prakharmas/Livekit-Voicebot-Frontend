@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { exportCallsCsv, getCalls, getCampaigns, getAgents, getCallsTranscript } from "@/lib/api";
+import { exportCallsCsv, getCalls, getCampaigns, getAgents, getCallsTranscript, getCallRecording } from "@/lib/api";
 import { Select } from "@/components/ui/Input";
 
 // interface TranscriptEntry {
@@ -20,8 +20,12 @@ interface CallRow {
   campaign_name: string | null;
   is_incoming: boolean;
   created_at: string;
+  started_at: string;
+  ended_at: string;
   finished: boolean;
   failure_reason: string;
+  sentiment: string;
+  has_recording: boolean;
 }
 
 // function displayNumber(c: CallRow): string {
@@ -72,6 +76,10 @@ export default function Calls() {
 
   const [agents, setAgents] = useState<{ uid: string; name: string }[]>([]);
   const [agentId, setAgentId] = useState("");
+
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const [loadingRecording, setLoadingRecording] = useState(false);
+  const [recordingError, setRecordingError] = useState(false);
 
   const handleExport = async () => {
     setExporting(true);
@@ -161,41 +169,46 @@ export default function Calls() {
       .finally(() => setLoadingTranscript(false));
   }, [selectedCall]);
 
-  // useEffect(() => {
-  //   if (!detail?.has_recording || !detail.id) {
-  //     setRecordingUrl(null);
-  //     setRecordingError(false);
-  //     setLoadingRecording(false);
-  //     return;
-  //   }
+  useEffect(() => {
+    if (!selectedCall?.has_recording) {
+      setRecordingUrl(null);
+      setRecordingError(false);
+      return;
+    }
 
-  //   let objectUrl: string | null = null;
-  //   let cancelled = false;
-  //   setLoadingRecording(true);
-  //   setRecordingError(false);
+    let objectUrl: string | null = null;
+    let cancelled = false;
 
-  //   fetchCallRecordingBlob(detail.id)
-  //     .then((res) => {
-  //       if (cancelled) return;
-  //       objectUrl = URL.createObjectURL(res.data);
-  //       setRecordingUrl(objectUrl);
-  //     })
-  //     .catch(() => {
-  //       if (!cancelled) {
-  //         setRecordingUrl(null);
-  //         setRecordingError(true);
-  //       }
-  //     })
-  //     .finally(() => {
-  //       if (!cancelled) setLoadingRecording(false);
-  //     });
+    setLoadingRecording(true);
+    setRecordingError(false);
 
-  //   return () => {
-  //     cancelled = true;
-  //     if (objectUrl) URL.revokeObjectURL(objectUrl);
-  //     setRecordingUrl(null);
-  //   };
-  // }, [detail?.id, detail?.has_recording]);
+    getCallRecording({
+      uid: selectedCall.uid,
+    })
+      .then((res) => {
+        if (cancelled) return;
+
+        objectUrl = URL.createObjectURL(res.data);
+        setRecordingUrl(objectUrl);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRecordingError(true);
+          setRecordingUrl(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRecording(false);
+      });
+
+    return () => {
+      cancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [selectedCall]);
 
   return (
     <div>
@@ -251,6 +264,8 @@ export default function Calls() {
                   <th className="text-left px-4 py-3">Direction</th>
                   <th className="text-left px-4 py-3">Status</th>
                   <th className="text-left px-4 py-3">Failure Reason</th>
+                  <th className="text-left px-4 py-3">Sentiment</th>
+                  <th className="text-left px-4 py-3">Recording</th>
                 </tr>
               </thead>
               <tbody>
@@ -279,9 +294,18 @@ export default function Calls() {
                     </td>
 
                     <td className="px-4 py-3">
-                      <Badge
+                      {/* <Badge
                         status={c.is_incoming ? "↓ incoming" : "↑ outgoing"}
-                      />
+                      /> */}
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          c.is_incoming
+                            ? "bg-green-100 text-green-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {c.is_incoming ? "↓ In" : "↑ Out"}
+                      </span>
                     </td>
 
                     <td className="px-4 py-3">
@@ -292,6 +316,34 @@ export default function Calls() {
 
                     <td className="px-4 py-3 text-red-600">
                       {c.failure_reason || "—"}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          c.sentiment?.toLowerCase() === "positive"
+                            ? "bg-green-100 text-green-700"
+                            : c.sentiment?.toLowerCase() === "negative"
+                            ? "bg-red-100 text-red-700"
+                            : c.sentiment?.toLowerCase() === "neutral"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {c.sentiment || "—"}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3">
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          c.has_recording
+                            ? "bg-green-100 text-green-700"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {c.has_recording ? "Available" : "No"}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -333,7 +385,17 @@ export default function Calls() {
 
                   <div>
                     <span className="text-slate-500">Direction</span>
-                    <p>{selectedCall.is_incoming ? "↓ Incoming" : "↑ Outgoing"}</p>
+                    <p>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          selectedCall.is_incoming
+                            ? "bg-green-100 text-green-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {selectedCall.is_incoming ? "↓ Inbound" : "↑ Outbound"}
+                      </span>
+                    </p>
                   </div>
 
                   <div>
@@ -345,6 +407,39 @@ export default function Calls() {
                     <span className="text-slate-500">Failure Reason</span>
                     <p>{selectedCall.failure_reason || "—"}</p>
                   </div>
+                </div>
+
+                <div>
+                  <span className="text-slate-500">Started At</span>
+                  <p>{formatDateTime(selectedCall.started_at)}</p>
+                </div>
+
+
+                <div>
+                  <span className="text-slate-500">Ended At</span>
+                  <p>{formatDateTime(selectedCall.ended_at)}</p>
+                </div>
+
+
+                <div>
+                  <span className="text-slate-500 block mb-2 font-medium">
+                    Recording
+                  </span>
+
+                  {!selectedCall.has_recording ? (
+                    <p className="text-slate-500">No recording available.</p>
+                  ) : loadingRecording ? (
+                    <p className="text-slate-500">Loading recording...</p>
+                  ) : recordingError ? (
+                    <p className="text-red-600">
+                      Unable to load recording.
+                    </p>
+                  ) : recordingUrl ? (
+                    <audio controls className="w-full">
+                      <source src={recordingUrl} type="audio/mpeg" />
+                      Your browser does not support audio playback.
+                    </audio>
+                  ) : null}
                 </div>
 
                 <div>
