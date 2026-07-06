@@ -136,7 +136,7 @@ export default function Clients() {
                   <td className="px-4 py-3 font-medium">{c.name}</td>
                   <td className="px-4 py-3 text-slate-600">{c.email}</td>
                   <td className="px-4 py-3 text-slate-600">{c.phone || "—"}</td>
-                  <td className="px-4 py-3">{c.status}</td>
+                  <td className="px-4 py-3">Active</td>
                   <td className="px-4 py-3 text-right">
                     <Button size="sm" variant="ghost" onClick={() => useClient(c.uid)}>
                       Manage →

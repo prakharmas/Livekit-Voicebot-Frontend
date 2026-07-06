@@ -117,7 +117,7 @@ export default function Login() {
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
-              <button
+              {/* <button
                 type="button"
                 onClick={() => {
                   setMode("forgot");
@@ -127,7 +127,7 @@ export default function Login() {
                 className="mt-3 w-full text-center text-sm text-brand-600 hover:underline"
               >
                 Forgot password?
-              </button>
+              </button> */}
             </>
           ) : (
             <>

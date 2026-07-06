@@ -20,6 +20,7 @@ interface ReadAgentResponse {
   xfer_sip_id: string;
   prompt: string;
   sentiment_prompt: string;
+  extraction_prompt: string;
   max_concurrent_calls: number;
   lead_fields: {
     name: string;
@@ -57,6 +58,7 @@ type AgentForm = {
   xfer_sip_id: string;
   prompt: string;
   sentiment_prompt: string;
+  extraction_prompt: string;
   max_concurrent_calls: number;
   lead_fields_text: string;
 };
@@ -67,6 +69,7 @@ const defaultForm: AgentForm = {
   xfer_sip_id: "",
   prompt: "",
   sentiment_prompt: "",
+  extraction_prompt: "",
   max_concurrent_calls: 1,
   lead_fields_text:
     "customer_name: Customer name\nphone: Mobile number",
@@ -162,6 +165,24 @@ function AgentFormFields({
           placeholder="Sentiment Prompt"
           value={form.sentiment_prompt}
           onChange={(e) => setForm({ ...form, sentiment_prompt: e.target.value })}
+        />
+      </div>
+      <div className="md:col-span-2">
+        <label className="text-xs font-medium text-slate-500 mb-1 block">
+          Extraction prompt
+        </label>
+
+        <Textarea
+          rows={12}
+          className="min-h-[200px] font-mono text-xs"
+          placeholder="Extraction Prompt"
+          value={form.extraction_prompt}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              extraction_prompt: e.target.value,
+            })
+          }
         />
       </div>
       <Textarea
@@ -303,6 +324,7 @@ export default function Agents() {
     xfer_sip_id: form.xfer_sip_id,
     prompt: form.prompt,
     sentiment_prompt: form.sentiment_prompt,
+    extraction_prompt: form.extraction_prompt,
     max_concurrent_calls: form.max_concurrent_calls,
     lead_fields: textToLeadFields(form.lead_fields_text),
   });
@@ -334,6 +356,7 @@ export default function Agents() {
         xfer_sip_id: data.xfer_sip_id,
         prompt: data.prompt,
         sentiment_prompt: data.sentiment_prompt,
+        extraction_prompt: data.extraction_prompt,
         max_concurrent_calls: data.max_concurrent_calls,
         lead_fields_text: leadFieldsToText(data.lead_fields),
       });

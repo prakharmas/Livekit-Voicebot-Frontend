@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { exportCallsCsv, getCalls, getCampaigns, getAgents, getCallsTranscript, getCallRecording } from "@/lib/api";
+import { getCalls, getCampaigns, getAgents, getCallsTranscript, getCallRecording } from "@/lib/api";
+// import { exportCallsCsv, getCalls, getCampaigns, getAgents, getCallsTranscript, getCallRecording } from "@/lib/api";
 import { Select } from "@/components/ui/Input";
 
 // interface TranscriptEntry {
@@ -18,6 +19,7 @@ interface CallRow {
   agent_name: string;
   campaign_uid: string | null;
   campaign_name: string | null;
+  customer_phone: string | null;
   is_incoming: boolean;
   created_at: string;
   started_at: string;
@@ -69,7 +71,7 @@ export default function Calls() {
   const [selectedCall, setSelectedCall] = useState<CallRow | null>(null);
   const [transcript, setTranscript] = useState<string[]>([]);
   const [loadingTranscript, setLoadingTranscript] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  // const [exporting, setExporting] = useState(false);
 
   const [campaigns, setCampaigns] = useState<{ uid: string; name: string }[]>([]);
   const [campaignId, setCampaignId] = useState("");
@@ -81,22 +83,22 @@ export default function Calls() {
   const [loadingRecording, setLoadingRecording] = useState(false);
   const [recordingError, setRecordingError] = useState(false);
 
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const res = await exportCallsCsv();
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: "text/csv" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `calls_export_${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } finally {
-      setExporting(false);
-    }
-  };
+  // const handleExport = async () => {
+  //   setExporting(true);
+  //   try {
+  //     const res = await exportCallsCsv();
+  //     const url = window.URL.createObjectURL(new Blob([res.data], { type: "text/csv" }));
+  //     const a = document.createElement("a");
+  //     a.href = url;
+  //     a.download = `calls_export_${new Date().toISOString().slice(0, 10)}.csv`;
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     a.remove();
+  //     window.URL.revokeObjectURL(url);
+  //   } finally {
+  //     setExporting(false);
+  //   }
+  // };
 
   useEffect(() => {
     const client_uid = localStorage.getItem("active_client_id");
@@ -120,7 +122,7 @@ export default function Calls() {
   const loadCalls = () => {
     const client_uid = localStorage.getItem("active_client_id");
 
-    if (!client_uid || !agentId) {
+    if (!client_uid) {
       // agent is mandatory
       setCalls([]);
       setSelectedCall(null);
@@ -133,8 +135,8 @@ export default function Calls() {
 
     const payload = {
       client_uid,
-      agent_uid: agentId,
-      campaign_uid: campaignId,
+      agent_uid: agentId || null,
+      campaign_uid: campaignId || null,
       only_without_campaign: !campaignId,
     };
 
@@ -219,7 +221,6 @@ export default function Calls() {
           <Select
             value={campaignId}
             onChange={(e) => setCampaignId(e.target.value)}
-            disabled={!agentId}
           >
             <option value="">Without Campaign</option>
             {campaigns.map((c) => (
@@ -233,7 +234,7 @@ export default function Calls() {
             value={agentId}
             onChange={(e) => setAgentId(e.target.value)}
           >
-            <option value="">Select Agent</option>
+            <option value="">All Agent</option>
 
             {agents.map((a) => (
               <option key={a.uid} value={a.uid}>
@@ -242,13 +243,13 @@ export default function Calls() {
             ))}
           </Select>
 
-          <button
+          {/* <button
             onClick={handleExport}
             disabled={exporting}
             className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
           >
             {exporting ? "Exporting..." : "Export CSV"}
-          </button>
+          </button> */}
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -260,7 +261,7 @@ export default function Calls() {
                   <th className="text-left px-4 py-3">Call ID</th>
                   <th className="text-left px-4 py-3">Date</th>
                   <th className="text-left px-4 py-3">Campaign</th>
-                  <th className="text-left px-4 py-3">Agent</th>
+                  <th className="text-left px-4 py-3">Number</th>
                   <th className="text-left px-4 py-3">Direction</th>
                   <th className="text-left px-4 py-3">Status</th>
                   <th className="text-left px-4 py-3">Failure Reason</th>
@@ -290,7 +291,7 @@ export default function Calls() {
                     </td>
 
                     <td className="px-4 py-3">
-                      {c.agent_name}
+                      {c.customer_phone}
                     </td>
 
                     <td className="px-4 py-3">
@@ -330,7 +331,11 @@ export default function Calls() {
                             : "bg-slate-100 text-slate-600"
                         }`}
                       >
-                        {c.sentiment || "—"}
+                        {c.sentiment
+                          ? c.sentiment.length > 20
+                            ? `${c.sentiment.slice(0, 20)}...`
+                            : c.sentiment
+                          : "—"}
                       </span>
                     </td>
 
@@ -368,6 +373,13 @@ export default function Calls() {
             {selectedCall && (
               <>
                 <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-slate-500">Customer</span>
+                    <p className="font-mono">
+                      {selectedCall.customer_phone ?? "—"}
+                    </p>
+                  </div>
+
                   <div>
                     <span className="text-slate-500">Agent</span>
                     <p>{selectedCall.agent_name}</p>

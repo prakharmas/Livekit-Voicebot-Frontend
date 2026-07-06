@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Play, Pause, Phone, Trash2 } from "lucide-react";
+import { Plus, Play, Pause, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input, Select } from "@/components/ui/Input";
@@ -235,11 +235,11 @@ export default function Campaigns() {
                       >
                         <Pause className="h-4 w-4 mr-1" /> Pause
                       </Button>
-                      <Button size="sm" disabled={busy === id} 
+                      {/* <Button size="sm" disabled={busy === id} 
                         // onClick={() => handleDial(id)}
                       >
                         <Phone className="h-4 w-4 mr-1" /> Dial leads now
-                      </Button>
+                      </Button> */}
                     </>
                   )}
                   <Button

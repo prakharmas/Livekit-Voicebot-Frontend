@@ -145,8 +145,8 @@ export const getCallRecording = (data: { uid: string }) =>
   });
 
 // Analytics
-export const getDashboardStats = (days = 30) =>
-  api.get("/analytics/dashboard", { params: { days } });
+export const getDashboardStats = (data: Record<string, unknown>) =>
+  api.post("/dashboard", data);
 export const getAgentPerformance = (days = 30) =>
   api.get("/analytics/agents", { params: { days } });
 export const getCampaignPerformance = () => api.get("/analytics/campaigns");
