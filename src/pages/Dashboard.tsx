@@ -201,7 +201,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         <Kpi label="Active Calls" value={String(stats?.active_calls ?? 0)} />
         <Kpi label="Today's Calls" value={String(stats?.todays_calls ?? 0)} />
-        <Kpi label="Answer Rate" value={`${stats?.answer_rate ?? 0}%`} />
+        <Kpi label="Answer Rate" value={`${(stats?.answer_rate ?? 0).toFixed(1)}%`} />
         <Kpi label="Transfer Rate" value={`${stats?.transfer_rate ?? 0}%`} />
         <Kpi label="Avg Duration" value={fmtDuration(stats?.avg_duration)}/>
       </div>
