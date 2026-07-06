@@ -290,9 +290,14 @@ export default function Calls() {
                       {c.campaign_name ?? "—"}
                     </td>
 
-                    <td className="px-4 py-3">
-                      {c.customer_phone}
-                    </td>
+                    <td className="px-4 py-3 max-w-[180px]">
+                    <div
+                      className="truncate"
+                      title={c.customer_phone ?? "—"}
+                    >
+                      {c.customer_phone ?? "—"}
+                    </div>
+                  </td>
 
                     <td className="px-4 py-3">
                       {/* <Badge
