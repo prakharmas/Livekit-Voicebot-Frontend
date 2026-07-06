@@ -6,7 +6,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import Agents from "@/pages/Agents";
 import SipTrunks from "@/pages/SipTrunks";
-import Dispatch from "@/pages/Dispatch";
+// import Dispatch from "@/pages/Dispatch";
 import Campaigns from "@/pages/Campaigns";
 import Leads from "@/pages/Leads";
 import LiveCalls from "@/pages/LiveCalls";
@@ -60,7 +60,7 @@ export default function App() {
             <Route path="sip-trunks" element={<SipTrunks />} />
             <Route path="phone-numbers" element={<SipTrunks />} />
             <Route path="reports" element={<Analytics />} />
-            <Route path="dispatch" element={<Dispatch />} />
+            {/* <Route path="dispatch" element={<Dispatch />} /> */}
             <Route path="campaigns" element={<Campaigns />} />
             <Route path="leads" element={<Leads />} />
             <Route path="live-calls" element={<LiveCalls />} />
