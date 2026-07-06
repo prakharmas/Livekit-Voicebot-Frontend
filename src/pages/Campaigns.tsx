@@ -24,7 +24,7 @@ interface Campaign {
 export default function Campaigns() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [agents, setAgents] = useState<{ uid: string; name: string }[]>([]);
-  const [stats, setStats] = useState<Record<string, { total: number; leads: Record<string, number> }>>({});
+  // const [stats, setStats] = useState<Record<string, { total: number; leads: Record<string, number> }>>({});
   const [form, setForm] = useState({ name: "", agent_uid: "", max_retries: 3, dial_rate: 1 });
   const [busy, setBusy] = useState<string | null>(null);
   const client_uid = localStorage.getItem("active_client_id");
@@ -201,7 +201,7 @@ export default function Campaigns() {
       <div className="grid gap-4">
         {campaigns.map((c) => {
           const id = c.uid;
-          const st = stats[id];
+          // const st = stats[id];
           const isRunning = c.enabled;
           return (
             <Card key={id}>
@@ -213,12 +213,6 @@ export default function Campaigns() {
                     {" · "}Dial rate: {c.dial_rate as number}/batch
                     {" · "}Max retries: {c.max_retries as number}
                   </p>
-                  {st && (
-                    <p className="text-xs text-slate-400 mt-1">
-                      Leads: {st.total} total · new: {st.leads?.new ?? 0} · dialing:{" "}
-                      {st.leads?.dialing ?? 0}
-                    </p>
-                  )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge status={c.enabled ? "running" : "paused"} />
