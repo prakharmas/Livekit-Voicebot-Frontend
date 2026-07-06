@@ -10,7 +10,7 @@ import { login, forgotPassword } from "@/lib/api";
 export default function Login() {
   const navigate = useNavigate();
   // const { refreshUser } = useAuth();
-  const [email, setEmail] = useState("");
+  // const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -121,7 +121,7 @@ export default function Login() {
                 type="button"
                 onClick={() => {
                   setMode("forgot");
-                  setForgotEmail(email);
+                  // setForgotEmail(email);
                   setForgotMsg("");
                 }}
                 className="mt-3 w-full text-center text-sm text-brand-600 hover:underline"
