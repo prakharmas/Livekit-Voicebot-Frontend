@@ -18,61 +18,63 @@ interface ReadAgentResponse {
   name: string;
   sip_id: string;
   xfer_sip_id: string;
-  prompt: string;
+  inbound_prompt: string;
+  outbound_prompt_template: string;
   sentiment_prompt: string;
   extraction_prompt: string;
   max_concurrent_calls: number;
-  lead_fields: {
-    name: string;
-    description: string;
-  }[];
+  lead_fields: string;
+  preset_uid: string | null;
 }
 
 
-function textToLeadFields(text: string) {
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [name, ...rest] = line.split(":");
+// function textToLeadFields(text: string) {
+//   return text
+//     .split("\n")
+//     .map((line) => line.trim())
+//     .filter(Boolean)
+//     .map((line) => {
+//       const [name, ...rest] = line.split(":");
 
-      return {
-        name: name.trim(),
-        description: rest.join(":").trim(),
-      };
-    });
-}
+//       return {
+//         name: name.trim(),
+//         description: rest.join(":").trim(),
+//       };
+//     });
+// }
 
-function leadFieldsToText(
-  lead_fields: { name: string; description: string }[] = []
-) {
-  return lead_fields
-    .map((f) => `${f.name}: ${f.description}`)
-    .join("\n");
-}
+// function leadFieldsToText(
+//   lead_fields: { name: string; description: string }[] = []
+// ) {
+//   return lead_fields
+//     .map((f) => `${f.name}: ${f.description}`)
+//     .join("\n");
+// }
 
 type AgentForm = {
   name: string;
   sip_id: string;
   xfer_sip_id: string;
-  prompt: string;
+  inbound_prompt: string;
+  outbound_prompt_template: string;
   sentiment_prompt: string;
   extraction_prompt: string;
   max_concurrent_calls: number;
   lead_fields_text: string;
+  preset_uid: string;
 };
 
 const defaultForm: AgentForm = {
   name: "",
   sip_id: "",
   xfer_sip_id: "",
-  prompt: "",
+  inbound_prompt: "",
+  outbound_prompt_template: "",
   sentiment_prompt: "",
   extraction_prompt: "",
   max_concurrent_calls: 1,
-  lead_fields_text:
-    "customer_name: Customer name\nphone: Mobile number",
+  lead_fields_text: "",
+  preset_uid: "",
 };
 
 // function agentToForm(agent: Agent): AgentForm {
@@ -92,8 +94,10 @@ function AgentFormFields({
   submitLabel,
   onSubmit,
   onCancel,
+  formError,
 }: {
   form: AgentForm;
+  formError?: string;
   setForm: (f: AgentForm) => void;
   submitLabel: string;
   onSubmit: () => void;
@@ -148,13 +152,40 @@ function AgentFormFields({
         onChange={(e) => setForm({ ...form, model: e.target.value })}
       /> */}
       <div className="md:col-span-2">
-        <label className="text-xs font-medium text-slate-500 mb-1 block">System prompt</label>
+        <label className="text-xs font-medium text-slate-500 mb-1 block">
+          Inbound Prompt
+        </label>
+
         <Textarea
-          rows={12}
-          className="min-h-[200px] font-mono text-xs"
-          placeholder="System Prompt — scripts, SOP, renewal flow, etc."
-          value={form.prompt}
-          onChange={(e) => setForm({ ...form, prompt: e.target.value })}
+          rows={10}
+          className="min-h-[180px] font-mono text-xs"
+          placeholder="Inbound Prompt"
+          value={form.inbound_prompt}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              inbound_prompt: e.target.value,
+            })
+          }
+        />
+      </div>
+
+      <div className="md:col-span-2">
+        <label className="text-xs font-medium text-slate-500 mb-1 block">
+          Outbound Prompt
+        </label>
+
+        <Textarea
+          rows={10}
+          className="min-h-[180px] font-mono text-xs"
+          placeholder="Outbound Prompt"
+          value={form.outbound_prompt_template}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              outbound_prompt_template: e.target.value,
+            })
+          }
         />
       </div>
       <div className="md:col-span-2">
@@ -186,10 +217,14 @@ function AgentFormFields({
         />
       </div>
       <Textarea
-        rows={5}
-        placeholder={"customer_name: Customer name\nphone: Mobile number"}
+        placeholder="customer_name, phone, city, email"
         value={form.lead_fields_text}
-        onChange={(e) => setForm({ ...form, lead_fields_text: e.target.value })}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            lead_fields_text: e.target.value,
+          })
+        }
       />
       {/* <div className="md:col-span-2">
         <label className="text-xs font-medium text-slate-500 mb-1 block">Greeting (first thing caller hears)</label>
@@ -282,6 +317,11 @@ function AgentFormFields({
           onChange={(e) => setForm({ ...form, required_lead_fields: e.target.value })}
         />
       </div> */}
+      {formError && (
+        <div className="md:col-span-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+          {formError}
+        </div>
+      )}
       <div className="md:col-span-2 flex gap-2">
         <Button onClick={onSubmit}>{submitLabel}</Button>
         {onCancel && (
@@ -304,6 +344,7 @@ export default function Agents() {
   const [testResult, setTestResult] = useState("");
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [formError, setFormError] = useState("");
 
   const load = () => {
     const client_uid = localStorage.getItem("active_client_id");
@@ -322,22 +363,32 @@ export default function Agents() {
     name: form.name,
     sip_id: form.sip_id,
     xfer_sip_id: form.xfer_sip_id,
-    prompt: form.prompt,
+    inbound_prompt: form.inbound_prompt,
+    outbound_prompt_template: form.outbound_prompt_template,
     sentiment_prompt: form.sentiment_prompt,
     extraction_prompt: form.extraction_prompt,
     max_concurrent_calls: form.max_concurrent_calls,
-    lead_fields: textToLeadFields(form.lead_fields_text),
+    lead_fields: form.lead_fields_text,
+    preset_uid: form.preset_uid || null,
   });
 
   const handleCreate = async () => {
     setSaving(true);
+    setFormError("");
     try {
       await createAgent(toPayload(createForm));
       setShowCreate(false);
       setCreateForm(defaultForm);
       await load();
+    } catch (err: any) {
+    const message =
+      err?.response?.data?.err_lead_fields_validation ||
+      err?.response?.data?.message ||
+      "Unable to create agent.";
+
+      setFormError(message);
     } finally {
-      setSaving(false);
+        setSaving(false);
     }
   };
 
@@ -354,11 +405,13 @@ export default function Agents() {
         name: data.name,
         sip_id: data.sip_id,
         xfer_sip_id: data.xfer_sip_id,
-        prompt: data.prompt,
+        inbound_prompt: data.inbound_prompt,
+        outbound_prompt_template: data.outbound_prompt_template,
         sentiment_prompt: data.sentiment_prompt,
         extraction_prompt: data.extraction_prompt,
         max_concurrent_calls: data.max_concurrent_calls,
-        lead_fields_text: leadFieldsToText(data.lead_fields),
+        lead_fields_text: data.lead_fields,
+        preset_uid: data.preset_uid ?? "",
       });
     } catch (err) {
       console.error(err);
@@ -374,10 +427,18 @@ export default function Agents() {
   const handleSaveEdit = async () => {
     if (editingId == null) return;
     setSaving(true);
+    setFormError("");
     try {
       await updateAgent({ uid: editingId, ...toPayload(editForm),});
       setEditingId(null);
       await load();
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.err_lead_fields_validation ||
+        err?.response?.data?.message ||
+        "Unable to update agent.";
+
+      setFormError(message);
     } finally {
       setSaving(false);
     }
@@ -441,6 +502,7 @@ export default function Agents() {
               setForm={setCreateForm}
               submitLabel={saving ? "Saving…" : "Create Agent"}
               onSubmit={handleCreate}
+              formError={formError}
               onCancel={() => {
                 setShowCreate(false);
                 setCreateForm(defaultForm);
@@ -469,6 +531,7 @@ export default function Agents() {
                   setForm={setEditForm}
                   submitLabel={saving ? "Saving…" : "Save changes"}
                   onSubmit={handleSaveEdit}
+                  formError={formError}
                   onCancel={cancelEdit}
                 />
               </CardContent>
