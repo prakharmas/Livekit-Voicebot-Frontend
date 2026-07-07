@@ -30,14 +30,14 @@ function formatDateTime(iso: string): string {
   if (!datePart || !timePart) return iso;
 
   const [year, month, day] = datePart.split("-");
-  const [hour, minute] = timePart.split(":");
+  const [hour, minute, second] = timePart.split(":");
 
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ];
 
-  return `${day} ${months[Number(month) - 1]} ${year}, ${hour}:${minute}`;
+  return `${day} ${months[Number(month) - 1]} ${year}, ${hour}:${minute}:${second.slice(0,2)}`;
 }
 
 // const HEALTH_COLORS: Record<string, string> = {

@@ -27,7 +27,13 @@ interface CallRow {
   finished: boolean;
   failure_reason: string;
   sentiment: string;
+  extracted_data: string | null;
   has_recording: boolean;
+}
+
+interface ExtractedData {
+  [key: string]: unknown;
+  note?: string | null;
 }
 
 // function displayNumber(c: CallRow): string {
@@ -42,14 +48,14 @@ function formatDateTime(iso: string): string {
   if (!datePart || !timePart) return iso;
 
   const [year, month, day] = datePart.split("-");
-  const [hour, minute] = timePart.split(":");
+  const [hour, minute, second] = timePart.split(":");
 
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ];
 
-  return `${day} ${months[Number(month) - 1]} ${year}, ${hour}:${minute}`;
+  return `${day} ${months[Number(month) - 1]} ${year}, ${hour}:${minute}:${second.slice(0,2)}`;
 }
 
 // function sentimentLabel(score: number | null) {
@@ -65,6 +71,28 @@ function formatDateTime(iso: string): string {
 //   if (score <= -0.3) return "text-red-600";
 //   return "text-amber-600";
 // }
+
+function parseExtractedData(
+  data?: string | null
+): ExtractedData | null {
+  if (!data) return null;
+
+  try {
+    const match = data.match(/```json\s*([\s\S]*?)\s*```/i);
+    const jsonText = match ? match[1] : data;
+
+    const parsed = JSON.parse(jsonText);
+
+    const noteMatch = data.match(/\*\*Note:\*\*\s*([\s\S]*)$/i);
+
+    return {
+      ...parsed,
+      note: noteMatch?.[1]?.trim() || null,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export default function Calls() {
   const [calls, setCalls] = useState<CallRow[]>([]);
@@ -82,6 +110,12 @@ export default function Calls() {
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   const [loadingRecording, setLoadingRecording] = useState(false);
   const [recordingError, setRecordingError] = useState(false);
+
+  const extracted = parseExtractedData(selectedCall?.extracted_data);
+
+  const PAGE_SIZE = 10;
+
+  const [currentPage, setCurrentPage] = useState(1);
 
   // const handleExport = async () => {
   //   setExporting(true);
@@ -141,7 +175,10 @@ export default function Calls() {
     };
 
     getCalls(payload)
-      .then((r) => setCalls(r.data.calls ?? []))
+      .then((r) => {
+        setCalls(r.data.calls ?? []);
+        setCurrentPage(1);
+      })
       .catch(() => setCalls([]));
   };
 
@@ -212,6 +249,13 @@ export default function Calls() {
     };
   }, [selectedCall]);
 
+  const totalPages = Math.max(1, Math.ceil(calls.length / PAGE_SIZE));
+
+  const paginatedCalls = calls.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -255,110 +299,147 @@ export default function Calls() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b">
-                <tr>
-                  <th className="text-left px-4 py-3">Call ID</th>
-                  <th className="text-left px-4 py-3">Date</th>
-                  <th className="text-left px-4 py-3">Campaign</th>
-                  <th className="text-left px-4 py-3">Number</th>
-                  <th className="text-left px-4 py-3">Direction</th>
-                  <th className="text-left px-4 py-3">Status</th>
-                  <th className="text-left px-4 py-3">Failure Reason</th>
-                  <th className="text-left px-4 py-3">Sentiment</th>
-                  <th className="text-left px-4 py-3">Recording</th>
-                </tr>
-              </thead>
-              <tbody>
-                {calls.map((c) => (
-                  <tr
-                    key={c.uid}
-                    onClick={() => setSelectedCall(c)}
-                    className={`border-b border-slate-50 cursor-pointer hover:bg-slate-50 ${
-                      selectedCall?.uid === c.uid ? "bg-brand-50" : ""
-                    }`}
-                  >
-                    <td className="px-4 py-3 font-mono">
-                      {c.uid.slice(0, 8)}
-                    </td>
-
-                    <td className="px-4 py-3 text-xs">
-                      {formatDateTime(c.created_at)}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      {c.campaign_name ?? "—"}
-                    </td>
-
-                    <td className="px-4 py-3 max-w-[180px]">
-                    <div
-                      className="truncate"
-                      title={c.customer_phone ?? "—"}
-                    >
-                      {c.customer_phone ?? "—"}
-                    </div>
-                  </td>
-
-                    <td className="px-4 py-3">
-                      {/* <Badge
-                        status={c.is_incoming ? "↓ incoming" : "↑ outgoing"}
-                      /> */}
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          c.is_incoming
-                            ? "bg-green-100 text-green-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
-                        {c.is_incoming ? "↓ In" : "↑ Out"}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <Badge
-                        status={c.finished ? "completed" : "running"}
-                      />
-                    </td>
-
-                    <td className="px-4 py-3 text-red-600">
-                      {c.failure_reason || "—"}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          c.sentiment?.toLowerCase() === "positive"
-                            ? "bg-green-100 text-green-700"
-                            : c.sentiment?.toLowerCase() === "negative"
-                            ? "bg-red-100 text-red-700"
-                            : c.sentiment?.toLowerCase() === "neutral"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {c.sentiment
-                          ? c.sentiment.length > 20
-                            ? `${c.sentiment.slice(0, 20)}...`
-                            : c.sentiment
-                          : "—"}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          c.has_recording
-                            ? "bg-green-100 text-green-700"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {c.has_recording ? "Available" : "No"}
-                      </span>
-                    </td>
+            <div className="w-full overflow-x-auto">
+              <table className="min-w-[950px] w-full text-sm">
+                <thead className="bg-slate-50 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-3">Call ID</th>
+                    <th className="text-left px-4 py-3">Date</th>
+                    <th className="text-left px-4 py-3">Campaign</th>
+                    <th className="text-left px-4 py-3">Number</th>
+                    <th className="text-left px-4 py-3">Direction</th>
+                    <th className="text-left px-4 py-3">Status</th>
+                    <th className="text-left px-4 py-3">Failure Reason</th>
+                    <th className="text-left px-4 py-3">Sentiment</th>
+                    <th className="text-left px-4 py-3">Recording</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {paginatedCalls.map((c) => (
+                    <tr
+                      key={c.uid}
+                      onClick={() => setSelectedCall(c)}
+                      className={`border-b border-slate-50 cursor-pointer hover:bg-slate-50 ${
+                        selectedCall?.uid === c.uid ? "bg-brand-50" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-3 font-mono">
+                        {c.uid.slice(0, 8)}
+                      </td>
+
+                      <td className="px-4 py-3 text-xs">
+                        {formatDateTime(c.created_at)}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {c.campaign_name ?? "—"}
+                      </td>
+
+                      <td className="px-4 py-3 max-w-[180px]">
+                      <div
+                        className="truncate"
+                        title={c.customer_phone ?? "—"}
+                      >
+                        {c.customer_phone ?? "—"}
+                      </div>
+                    </td>
+
+                      <td className="px-4 py-3">
+                        {/* <Badge
+                          status={c.is_incoming ? "↓ incoming" : "↑ outgoing"}
+                        /> */}
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            c.is_incoming
+                              ? "bg-green-100 text-green-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          {c.is_incoming ? "↓ In" : "↑ Out"}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <Badge
+                          status={c.finished ? "completed" : "running"}
+                        />
+                      </td>
+
+                      <td className="px-4 py-3 text-red-600">
+                        {c.failure_reason || "—"}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            c.sentiment?.toLowerCase() === "positive"
+                              ? "bg-green-100 text-green-700"
+                              : c.sentiment?.toLowerCase() === "negative"
+                              ? "bg-red-100 text-red-700"
+                              : c.sentiment?.toLowerCase() === "neutral"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {c.sentiment
+                            ? c.sentiment.length > 20
+                              ? `${c.sentiment.slice(0, 20)}...`
+                              : c.sentiment
+                            : "—"}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            c.has_recording
+                              ? "bg-green-100 text-green-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {c.has_recording ? "Available" : "No"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                <div className="text-sm text-slate-600">
+                  Showing{" "}
+                  {calls.length === 0
+                    ? 0
+                    : (currentPage - 1) * PAGE_SIZE + 1}
+                  {" - "}
+                  {Math.min(currentPage * PAGE_SIZE, calls.length)}
+                  {" of "}
+                  {calls.length}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    className="rounded border px-3 py-1 disabled:opacity-50"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                  >
+                    Previous
+                  </button>
+
+                  <span className="text-sm">
+                    Page {currentPage} / {totalPages}
+                  </span>
+
+                  <button
+                    className="rounded border px-3 py-1 disabled:opacity-50"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -435,6 +516,63 @@ export default function Calls() {
                 <div>
                   <span className="text-slate-500">Ended At</span>
                   <p>{formatDateTime(selectedCall.ended_at)}</p>
+                </div>
+
+                <div>
+                  <span className="text-slate-500 block mb-2 font-medium">
+                    Extracted Information
+                  </span>
+
+                  {extracted ? (
+                    <div className="rounded-lg border bg-slate-50 p-3 space-y-3">
+                      {Object.entries(extracted).map(([key, value]) => {
+                        if (key === "note") return null;
+
+                        return (
+                          <div key={key}>
+                            <p className="text-xs text-slate-500 capitalize">
+                              {key.replace(/_/g, " ")}
+                            </p>
+
+                            {value &&
+                            typeof value === "object" &&
+                            !Array.isArray(value) ? (
+                              <div className="ml-2 mt-1 space-y-1">
+                                {Object.entries(value as Record<string, unknown>).map(
+                                  ([subKey, subValue]) => (
+                                    <div key={subKey} className="flex gap-2">
+                                      <span className="font-medium capitalize">
+                                        {subKey.replace(/_/g, " ")}:
+                                      </span>
+
+                                      <span>
+                                        {subValue != null && subValue !== ""
+                                          ? String(subValue)
+                                          : "—"}
+                                      </span>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            ) : (
+                              <p>{value != null && value !== "" ? String(value) : "—"}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {extracted.note && (
+                        <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                          <p className="text-xs font-semibold text-amber-700">Note</p>
+                          <p className="text-sm text-amber-800">{extracted.note}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-slate-500">
+                      No extracted information available.
+                    </p>
+                  )}
                 </div>
 
 
