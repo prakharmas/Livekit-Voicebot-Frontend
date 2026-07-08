@@ -9,7 +9,7 @@ import { createAgent, deleteAgent, getAgents, readAgent, updateAgent, enableAgen
 interface Agent {
   uid: string;
   name: string;
-  enabled: boolean;
+  status: "enabled" | "disabled" | "shutting_down";
 }
 
 interface ReadAgentResponse {
@@ -25,6 +25,7 @@ interface ReadAgentResponse {
   max_concurrent_calls: number;
   lead_fields: string;
   preset_uid: string | null;
+  status: "enabled" | "disabled" | "shutting_down";
 }
 
 
@@ -450,15 +451,27 @@ export default function Agents() {
   // };
 
   const toggleActive = async (agent: Agent) => {
+    if (agent.status === "shutting_down") {
+      alert("Agent is shutting down. Status cannot be changed.");
+      return;
+    }
+
     setBusy(agent.uid);
 
     try {
       await enableAgent({
         uid: agent.uid,
-        enable: !agent.enabled,
+        enable: agent.status === "disabled",
       });
 
       await load();
+    } catch (err: any) {
+      if (err.response?.data?.err_sip_id_conflict) {
+        alert("The SIP ID for this agent is already being used by another agent.");
+        return;
+      }
+
+      alert("Unable to update agent status.");
     } finally {
       setBusy(null);
     }
@@ -541,7 +554,15 @@ export default function Agents() {
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold">{agent.name}</h3>
                     <span className="text-xs font-mono text-slate-400">ID #{agent.uid}</span>
-                    <Badge status={agent.enabled ? "active" : "inactive"} />
+                    <Badge
+                      status={
+                        agent.status === "enabled"
+                          ? "active"
+                          : agent.status === "disabled"
+                          ? "inactive"
+                          : "running"
+                      }
+                    />
                   </div>
                   {/* <p className="text-sm text-slate-500 mt-1">
                     {agent.language} · {agent.voice} · {agent.provider} · {agent.model}
@@ -557,10 +578,14 @@ export default function Agents() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    disabled={busy === agent.uid}
+                    disabled={busy === agent.uid || agent.status === "shutting_down"}
                     onClick={() => toggleActive(agent)}
                   >
-                    {agent.enabled ? "Deactivate" : "Activate"}
+                    {agent.status === "shutting_down"
+                      ? "Shutting Down..."
+                      : agent.status === "enabled"
+                      ? "Deactivate"
+                      : "Activate"}
                   </Button>
                   {/* <Button variant="secondary" size="sm" onClick={() => handleTest(agent.uid, agent.name)}>
                     <TestTube className="h-4 w-4 mr-1" />
