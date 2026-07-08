@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { getCalls, getCampaigns, getAgents, getCallsTranscript, getCallRecording } from "@/lib/api";
-// import { exportCallsCsv, getCalls, getCampaigns, getAgents, getCallsTranscript, getCallRecording } from "@/lib/api";
+import { exportCampaignReport, getCalls, getCampaigns, getAgents, getCallsTranscript, getCallRecording } from "@/lib/api";
 import { Select } from "@/components/ui/Input";
 
 // interface TranscriptEntry {
@@ -99,7 +98,7 @@ export default function Calls() {
   const [selectedCall, setSelectedCall] = useState<CallRow | null>(null);
   const [transcript, setTranscript] = useState<string[]>([]);
   const [loadingTranscript, setLoadingTranscript] = useState(false);
-  // const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const [campaigns, setCampaigns] = useState<{ uid: string; name: string }[]>([]);
   const [campaignId, setCampaignId] = useState("");
@@ -117,22 +116,49 @@ export default function Calls() {
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  // const handleExport = async () => {
-  //   setExporting(true);
-  //   try {
-  //     const res = await exportCallsCsv();
-  //     const url = window.URL.createObjectURL(new Blob([res.data], { type: "text/csv" }));
-  //     const a = document.createElement("a");
-  //     a.href = url;
-  //     a.download = `calls_export_${new Date().toISOString().slice(0, 10)}.csv`;
-  //     document.body.appendChild(a);
-  //     a.click();
-  //     a.remove();
-  //     window.URL.revokeObjectURL(url);
-  //   } finally {
-  //     setExporting(false);
-  //   }
-  // };
+  const handleExport = async () => {
+    if (!campaignId) {
+      alert("Please select a campaign first.");
+      return;
+    }
+
+    setExporting(true);
+
+    try {
+      const res = await exportCampaignReport(campaignId);
+
+      const blob = new Blob([
+        res.data,
+      ], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      // Read filename from Content-Disposition header
+      const disposition = res.headers["content-disposition"];
+      let filename = "campaign-report.xlsx";
+
+      if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match?.[1]) {
+          filename = match[1];
+        }
+      }
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     const client_uid = localStorage.getItem("active_client_id");
@@ -266,7 +292,7 @@ export default function Calls() {
             value={campaignId}
             onChange={(e) => setCampaignId(e.target.value)}
           >
-            <option value="">Without Campaign</option>
+            <option value="">Select Campaign</option>
             {campaigns.map((c) => (
               <option key={c.uid} value={c.uid}>
                 {c.name}
@@ -287,13 +313,13 @@ export default function Calls() {
             ))}
           </Select>
 
-          {/* <button
+          <button
             onClick={handleExport}
             disabled={exporting}
             className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
           >
-            {exporting ? "Exporting..." : "Export CSV"}
-          </button> */}
+            {exporting ? "Exporting..." : "Export Excel"}
+          </button>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

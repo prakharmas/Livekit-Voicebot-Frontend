@@ -60,6 +60,14 @@ export default function Leads() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!campaignId) {
+      alert("Please select a campaign before uploading leads.");
+      if (fileRef.current) {
+        fileRef.current.value = "";
+      }
+      return;
+    }
+
     try {
       const client_uid = localStorage.getItem("active_client_id");
 
@@ -73,12 +81,13 @@ export default function Leads() {
 
       const payload: Record<string, string> = {
         client_uid,
+        campaign_uid: campaignId,
         leads_csv,
       };
 
-      if (campaignId) {
-        payload.campaign_uid = campaignId;
-      }
+      // if (campaignId) {
+      //   payload.campaign_uid = campaignId;
+      // }
 
       const res = await uploadLeads(payload)
 
@@ -168,7 +177,17 @@ export default function Leads() {
             className="hidden"
             onChange={handleUpload}
           />
-          <Button variant="secondary" onClick={() => fileRef.current?.click()}>
+          <Button
+            variant="secondary"
+            disabled={!campaignId}
+            onClick={() => {
+              if (!campaignId) {
+                alert("Please select a campaign before uploading leads.");
+                return;
+              }
+              fileRef.current?.click();
+            }}
+          >
             <Upload className="h-4 w-4 mr-2" /> Upload CSV
           </Button>
           <Button
@@ -186,7 +205,7 @@ export default function Leads() {
         <CardContent className="py-3 text-sm text-slate-600">
           CSV columns: <span className="font-mono">phone</span> (required),{" "}
           <span className="font-mono">name</span>, <span className="font-mono">email</span> .{" "}
-          Campaign select karo to assign leads — ya bina campaign ke bhi upload kar sakte ho.
+          Please select a campaign before uploading the CSV. Leads can only be uploaded to a campaign.
         </CardContent>
       </Card>
 

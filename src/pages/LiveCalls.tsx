@@ -213,7 +213,7 @@ export default function LiveCalls() {
             value={campaignId}
             onChange={(e) => setCampaignId(e.target.value)}
           >
-            <option value="">Without Campaign</option>
+            <option value="">Select Campaign</option>
 
             {campaigns.map((c) => (
               <option key={c.uid} value={c.uid}>

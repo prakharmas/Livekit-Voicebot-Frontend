@@ -130,11 +130,19 @@ export const deleteLeads = (data: { uids: string[] }) =>
 export const getCalls = (data: Record<string, unknown>) => api.post("/list-calls-detailed", data);
 export const getCallsTranscript = (data: Record<string, unknown>) => api.post("/get-call-transcript", data);
 /** Download all calls (with collected-data columns) as CSV. */
-export const exportCallsCsv = (campaignId?: number) =>
-  api.get("/calls/export.csv", {
-    params: campaignId ? { campaign_id: campaignId } : {},
-    responseType: "blob",
-  });
+// export const exportCallsCsv = (campaignId?: number) =>
+//   api.get("/calls/export.csv", {
+//     params: campaignId ? { campaign_id: campaignId } : {},
+//     responseType: "blob",
+//   });
+export const exportCampaignReport = (uid: string) =>
+  api.post(
+    "/get-campaign-report",
+    { uid },
+    {
+      responseType: "blob",
+    }
+  );
 export const getLiveCalls = () => api.get("/calls/live");
 export const getCall = (id: number) => api.get(`/calls/${id}`);
 
