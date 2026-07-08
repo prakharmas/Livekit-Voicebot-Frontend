@@ -636,16 +636,17 @@ export default function Calls() {
                         <p className="text-slate-500">No transcript available.</p>
                       ) : (
                         transcript.map((line, index) => {
-                          const speaker =
-                            line.startsWith("agent says:")
+                           const speaker =
+                            line.startsWith("Agent says:")
                               ? "Agent"
-                              : line.startsWith("user says:")
-                              ? "User"
+                              : line.startsWith("Customer says:")
+                              ? "Customer"
                               : "";
 
                           const content = line
-                            .replace(/^agent says:\s*/i, "")
-                            .replace(/^user says:\s*/i, "")
+                            .replace(/^Agent says:\s*/i, "")
+                            .replace(/^Customer says:\s*/i, "")
+                            .replace(/ACTION-END-CALL/g, "")
                             .replace(/---/g, "")
                             .trim();
 
