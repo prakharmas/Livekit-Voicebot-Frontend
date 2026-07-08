@@ -89,13 +89,40 @@ export default function Leads() {
       //   payload.campaign_uid = campaignId;
       // }
 
-      const res = await uploadLeads(payload)
+      // const res = await uploadLeads(payload)
+
+      // alert(res.data.message ?? "Leads uploaded successfully.");
+
+      // load();
+      const res = await uploadLeads(payload);
+
+      if (
+        Array.isArray(res.data.err_missing_fields) &&
+        res.data.err_missing_fields.length > 0
+      ) {
+        alert(
+          `Missing required CSV column(s): ${res.data.err_missing_fields.join(", ")}`
+        );
+        return;
+      }
 
       alert(res.data.message ?? "Leads uploaded successfully.");
 
       load();
     } catch (err: any) {
-      const detail = err?.response?.data?.detail;
+      const data = err?.response?.data;
+
+      if (
+        Array.isArray(data?.err_missing_fields) &&
+        data.err_missing_fields.length > 0
+      ) {
+        alert(
+          `Missing required CSV column(s): ${data.err_missing_fields.join(", ")}`
+        );
+        return;
+      }
+
+      const detail = data?.detail;
 
       const msg =
         typeof detail === "string"
