@@ -571,7 +571,26 @@ export default function Agents() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <Button variant="secondary" size="sm" onClick={() => startEdit(agent)}>
+                  {/* <Button variant="secondary" size="sm" onClick={() => startEdit(agent)}>
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button> */}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={
+                      agent.status === "enabled" ||
+                      agent.status === "shutting_down"
+                    }
+                    title={
+                      agent.status === "enabled"
+                        ? "Deactivate the agent before editing."
+                        : agent.status === "shutting_down"
+                        ? "Cannot edit while the agent is shutting down."
+                        : ""
+                    }
+                    onClick={() => startEdit(agent)}
+                  >
                     <Pencil className="h-4 w-4 mr-1" />
                     Edit
                   </Button>
