@@ -260,10 +260,14 @@ export default function Campaigns() {
 
       <p className="text-sm text-slate-500 mt-6">
         Upload leads on the <strong>Leads</strong> page and select this campaign. Then{" "}
+        <strong>Start</strong> the campaign.
+      </p>
+      {/* <p className="text-sm text-slate-500 mt-6">
+        Upload leads on the <strong>Leads</strong> page and select this campaign. Then{" "}
         <strong>Start</strong> the campaign and click <strong>Dial leads now</strong>. Your phone
         will ring and the AI agent will talk when you answer. Worker and outbound SIP trunk must be
         running.
-      </p>
+      </p> */}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 // import { io } from "socket.io-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 // import { Badge } from "@/components/ui/Badge";
@@ -55,6 +55,16 @@ export default function LiveCalls() {
   const [campaignId, setCampaignId] = useState("");
   const [agents, setAgents] = useState<{ uid: string; name: string }[]>([]);
   const [agentId, setAgentId] = useState("");
+  const transcriptRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (transcriptRef.current && transcript.length > 0) {
+      transcriptRef.current.scrollTo({
+        top: transcriptRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [transcript]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -141,10 +151,18 @@ export default function LiveCalls() {
           uid: selectedCall.uid,
         });
 
-        if ((res.data.finished_transcript ?? []).length > 0) {
-          setTranscript(res.data.finished_transcript);
+        // if ((res.data.finished_transcript ?? []).length > 0) {
+        //   setTranscript(res.data.finished_transcript);
+        // } else {
+        //   setTranscript(res.data.live_transcript ?? []);
+        // }
+        const finished = res.data.finished_transcript ?? [];
+        const live = res.data.live_transcript ?? [];
+
+        if (finished.length > 0) {
+          setTranscript(finished);
         } else {
-          setTranscript(res.data.live_transcript ?? []);
+          setTranscript(live);
         }
       } catch {
         setTranscript([]);
@@ -350,7 +368,10 @@ export default function LiveCalls() {
               )}
 
               {!loadingTranscript && selectedCall && (
-                <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                <div
+                  ref={transcriptRef}
+                  className="space-y-2 max-h-[500px] overflow-y-auto"
+                >
                   {transcript.length === 0 ? (
                     <p>No transcript available.</p>
                   ) : (

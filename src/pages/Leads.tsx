@@ -279,6 +279,29 @@ export default function Leads() {
                   <td className="px-4 py-3 font-mono">{l.phone as string}</td>
                   <td className="px-4 py-3">{(l.name as string) || "—"}</td>
                   <td className="px-4 py-3">
+                    {(() => {
+                      const status = String(l.status ?? "").toLowerCase();
+
+                      return (
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            status === "new"
+                              ? "bg-blue-100 text-blue-700"
+                              : status === "connected"
+                              ? "bg-green-100 text-green-700"
+                              : status === "failed"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {status
+                            ? status.charAt(0).toUpperCase() + status.slice(1)
+                            : "—"}
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  {/* <td className="px-4 py-3">
                     <span
                       className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         l.is_new
@@ -290,7 +313,7 @@ export default function Leads() {
                     >
                       {l.is_new ? "New" : l.is_connected ? "Connected" : "Failed"}
                     </span>
-                  </td>
+                  </td> */}
 
                   <td className="px-4 py-3">
                     {(l.num_retries as number) ?? 0}

@@ -499,10 +499,13 @@ export default function Agents() {
       </div>
 
       <p className="text-sm text-slate-500 mb-4">
+        Agents must be <strong>deactivated</strong> before they can be edited. Click <strong>Deactivate</strong>, then <strong>Edit</strong> to modify the agent.
+      </p>
+      {/* <p className="text-sm text-slate-500 mb-4">
         Click <strong>Edit</strong> on an agent to change prompt. Use agent{" "}
         <strong>ID</strong> in Dispatch and Campaigns. Changes apply to the next call (restart worker if a call is
         already in progress).
-      </p>
+      </p> */}
 
       {showCreate && (
         <Card className="mb-6">
