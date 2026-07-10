@@ -376,16 +376,17 @@ export default function LiveCalls() {
                     <p>No transcript available.</p>
                   ) : (
                     transcript.map((line, i) => {
-                      const speaker =
-                        line.startsWith("agent says:")
-                          ? "Agent"
-                          : line.startsWith("user says:")
-                          ? "User"
-                          : "";
+                      const lower = line.toLowerCase();
+
+                      const speaker = lower.startsWith("agent says:")
+                        ? "Agent"
+                        : lower.startsWith("customer says:")
+                        ? "Customer"
+                        : "";
 
                       const content = line
                         .replace(/^agent says:\s*/i, "")
-                        .replace(/^user says:\s*/i, "")
+                        .replace(/^customer says:\s*/i, "")
                         .replace(/---/g, "")
                         .trim();
 
